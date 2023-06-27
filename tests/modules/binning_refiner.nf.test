@@ -1,0 +1,39 @@
+nextflow_process {
+
+    name "Test module binning refiner"
+    script "modules/binning_refiner.nf"
+    process "BINNING_REFINER"
+
+    test("bin refine 2 binners") {
+        when {
+            process {
+                """
+                input[0] = channel.value("binner123")
+                input[1] = channel.fromPath("${baseDir}/tests/resources/binner1")
+                input[2] = channel.fromPath("${baseDir}/tests/resources/binner2")
+                input[3] = channel.fromPath("NO_FILE")
+                """
+            }
+        }
+        then {
+            assert process.success
+            assert snapshot(process.out).match()
+        }
+    }
+    test("bin refine 3 binners") {
+        when {
+            process {
+                """
+                input[0] = channel.value("binner123")
+                input[1] = channel.fromPath("${baseDir}/tests/resources/binner1")
+                input[2] = channel.fromPath("${baseDir}/tests/resources/binner2")
+                input[3] = channel.fromPath("${baseDir}/tests/resources/binner3")
+                """
+            }
+        }
+        then {
+            assert process.success
+            assert snapshot(process.out).match()
+        }
+    }
+}

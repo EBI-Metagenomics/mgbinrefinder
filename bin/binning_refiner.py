@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python3
 
 # Copyright (C) 2017, Weizhi Song, Torsten Thomas.
 # songwz03@gmail.com
@@ -201,7 +201,6 @@ for each in combined_all_bins:
 contig_assignments_file = '%s/%s/contig_assignments.txt' % (wd, output_folder)
 contig_assignments = open(contig_assignments_file, 'w')
 
-
 for each in contig_bin_dict:
     if len(contig_bin_dict[each]) == len(input_bin_folder_list):
         contig_assignments.write('%s\t%s\t%s\n' % ('\t'.join(contig_bin_dict[each]), each, contig_length_dict[each]))
@@ -221,6 +220,7 @@ current_match_contigs = []
 current_length_total = 0
 n = 1
 for each in contig_assignments_sorted:
+    print(each, current_match, current_match_contigs, current_length_total)
     each_split = each.strip().split('\t')
     current_contig = each_split[-2]
     current_length = int(each_split[-1])
@@ -252,22 +252,10 @@ refined_bin_number = n
 sleep(1)
 print('The number of refined bins: %s' % refined_bin_number)
 
+os.mkdir(os.path.join(wd, output_folder, 'Refined'))
 
-# Export refined bins and prepare input for GoogleVis
-sleep(1)
-print('Exporting refined bins...')
-separated_1 = '%s/%s/Refined_bins_sources_and_length.txt' % (wd, output_folder)
-separated_2 = '%s/%s/Refined_bins_contigs.txt' % (wd, output_folder)
-googlevis_input_file = '%s/%s/GoogleVis_Sankey_%sMbp.csv' % (wd, output_folder, bin_size_cutoff_MB)
-os.mkdir('%s/%s/Refined' % (wd, output_folder))
 refined_bins = open(contig_assignments_file_sorted_one_line)
-googlevis_input_handle = open(googlevis_input_file, 'w')
-separated_1_handle = open(separated_1, 'w')
-separated_2_handle = open(separated_2, 'w')
 
-
-
-googlevis_input_handle.write('C1,C2,Length (Mbp)\n')
 for each_refined_bin in refined_bins:
     each_refined_bin_split = each_refined_bin.strip().split('\t')
     each_refined_bin_name = each_refined_bin_split[0]
@@ -277,20 +265,11 @@ for each_refined_bin in refined_bins:
         each_refined_bin_source = each_refined_bin_split[1:3]
         each_refined_bin_length = int(each_refined_bin_split[3][:-2])
         each_refined_bin_contig = each_refined_bin_split[4:]
-        separated_1_handle.write('%s\t%sbp\t%s\n' % (each_refined_bin_name, each_refined_bin_length, '\t'.join(each_refined_bin_source)))
-        separated_2_handle.write('%s\n%s\n' % (each_refined_bin_name, '\t'.join(each_refined_bin_contig)))
 
     if len(input_bin_folder_list) == 3:
         each_refined_bin_source = each_refined_bin_split[1:4]
         each_refined_bin_length = int(each_refined_bin_split[4][:-2])
         each_refined_bin_contig = each_refined_bin_split[5:]
-        separated_1_handle.write('%s\t%sbp\t%s\n' % (each_refined_bin_name, each_refined_bin_length, '\t'.join(each_refined_bin_source)))
-        separated_2_handle.write('%s\n%s\n' % (each_refined_bin_name, '\t'.join(each_refined_bin_contig)))
-    each_refined_bin_length_mbp = float("{0:.2f}".format(each_refined_bin_length / (1024 * 1024)))
-    m = 0
-    while m < len(each_refined_bin_source)-1:
-        googlevis_input_handle.write('%s,%s,%s\n' % (each_refined_bin_source[m], each_refined_bin_source[m+1], each_refined_bin_length_mbp))
-        m += 1
 
     stdout.write('\rExtracting refined bin: %s.fasta' % each_refined_bin_name)
     refined_bin_file = '%s/%s/Refined/%s.fasta' % (wd, output_folder, each_refined_bin_name)
@@ -304,18 +283,6 @@ for each_refined_bin in refined_bins:
             each_input_contig.description = ''
             SeqIO.write(each_input_contig, refined_bin_handle, 'fasta')
     refined_bin_handle.close()
-googlevis_input_handle.close()
-separated_1_handle.close()
-separated_2_handle.close()
 
 
-# remove temporary files
-sleep(1)
-print('\nDeleting temporary files')
-os.system('rm %s' % contig_assignments_file)
-os.system('rm %s' % (combined_all_bins_file))
-os.system('rm %s/%s/*.fa' % (wd, output_folder))
-os.system('rm %s' % (contig_assignments_file_sorted))
-os.system('rm %s' % (contig_assignments_file_sorted_one_line))
-sleep(1)
-print('\nAll done!')
+
