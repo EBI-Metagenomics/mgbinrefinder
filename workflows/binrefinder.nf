@@ -39,8 +39,9 @@ workflow REFINEMENT {
     renamed_binner2 = RENAME_BINNER2.out.renamed.collect()
     renamed_binner3 = RENAME_BINNER3.out.renamed.collect()
 
-    REFINE12(channel.value("binner12"), renamed_binner1, renamed_binner2, channel.fromPath('NO_FILE'))
-    REFINE123(channel.value("binner123"), renamed_binner1, renamed_binner2, renamed_binner3)
+    REFINE12(channel.value("binner12"), renamed_binner1, renamed_binner2, channel.fromPath('NO_FILE'), ref_checkm)
+
+    REFINE123(channel.value("binner123"), renamed_binner1, renamed_binner2, renamed_binner3, ref_checkm)
 
     //CHECKM_1(channel.value("binner1"), renamed_binner1, ref_checkm)
     //CHECKM_2(channel.value("binner2"), renamed_binner2, ref_checkm)

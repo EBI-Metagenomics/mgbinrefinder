@@ -14,3 +14,4 @@ process RENAME_BINS {
     cp ${bin} ${name}.${bin.baseName}.fa
     """
 }
+
