@@ -57,6 +57,10 @@ parser.add_argument('-o',
                     required=True,
                     help='output folder name')
 
+parser.add_argument('-n',
+                    required=True,
+                    help='name prefix')
+
 parser.add_argument('-ms',
                     required=False,
                     default=524288,
@@ -65,6 +69,7 @@ parser.add_argument('-ms',
 
 args = vars(parser.parse_args())
 output_dir = args['o']
+output_name = args['n']
 if output_dir[-1]=='/':
     output_dir=output_dir[:-1]
 
@@ -258,7 +263,7 @@ refined_bins = open(contig_assignments_file_sorted_one_line)
 
 for each_refined_bin in refined_bins:
     each_refined_bin_split = each_refined_bin.strip().split('\t')
-    each_refined_bin_name = each_refined_bin_split[0]
+    each_refined_bin_name = output_name + '_' + each_refined_bin_split[0]
     each_refined_bin_length = 0
     each_refined_bin_contig = []
     if len(input_bin_folder_list) == 2:

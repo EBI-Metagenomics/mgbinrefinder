@@ -12,5 +12,6 @@ workflow REFINE {
         CHECKM2(name, BINNING_REFINER.out.refined_bins, checkm_db)
     emit:
         refined = BINNING_REFINER.out.refined_bins
-        filtered = CHECKM2.out.checkm2_results_filtered
+        filtered_bins = CHECKM2.out.checkm2_results_filtered
+        filtered_bins_stats = CHECKM2.out.checkm2_results_filtered_stats
 }

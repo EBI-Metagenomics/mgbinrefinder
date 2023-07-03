@@ -94,11 +94,15 @@ for bin_1 in good_bins_1:
 		mismatch_2_length=0
 
 		for contig in bins_1[bin_1]:
-			if contig in bins_2[bin_2]: match_1_length+=bins_2[bin_2][contig]
-			else: mismatch_1_length+=bins_1[bin_1][contig]
+			if contig in bins_2[bin_2]:
+				match_1_length+=bins_2[bin_2][contig]
+			else:
+				mismatch_1_length+=bins_1[bin_1][contig]
 		for contig in bins_2[bin_2]:
-                        if contig in bins_1[bin_1]: match_2_length+=bins_1[bin_1][contig]
-			else: mismatch_2_length+=bins_2[bin_2][contig]
+            if contig in bins_1[bin_1]:
+				match_2_length+=bins_1[bin_1][contig]
+			else:
+				mismatch_2_length+=bins_2[bin_2][contig]
 
 		# chose the highest % ID, dependinsh of which bin is  asubset of the other
 		ratio_1=100*match_1_length/(match_1_length+mismatch_1_length)

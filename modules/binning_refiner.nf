@@ -25,6 +25,6 @@ process BINNING_REFINER {
         args = "-3 binner3"
     }
     """
-    binning_refiner.py -1 binner1 -2 binner2 ${args} -o output_${name}
+    binning_refiner.py -1 binner1 -2 binner2 ${args} -o output_${name} -n ${name}
     """
 }
