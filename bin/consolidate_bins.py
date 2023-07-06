@@ -22,7 +22,7 @@ def get_stats(binner, stats):
         next(file_in)
         for line in file_in:
             line = line.strip().split('\t')
-            stats_dict[line[0]] = [float(line[1]), float(line[2])]
+            stats_dict[line[0] + '.fa'] = [float(line[1]), float(line[2])]
     return stats_dict
 
 def get_bins_from_binner(binner_dir):
@@ -111,6 +111,7 @@ def parse_args():
 
 def main(args):
     consolidated_bins = "consolidated_bins"
+    dereplicated_bins = "dereplicated_bins"
     binners = args.input
     if len(binners) < 2:
         print('Number of binners is less then 2. Check you input')
@@ -133,15 +134,37 @@ def main(args):
                 copy(os.path.join(binner, bin), os.path.join(consolidated_bins, bin))
                 break
 
-    # generate dereplicated bins
-    #contig_mapping = {}
-    #for bin in os.listdir(consolidated_bins):
-
-
+    # write consolidated stats
     with open("consolidated_stats.tsv", 'w') as file_out:
         file_out.write("\t".join(['bin', 'completeness', 'contamination']) + '\n')
         for item in best_stats:
             file_out.write("\t".join([item, str(best_stats[item][0]), str(best_stats[item][1])]) + '\n')
+
+    # generate dereplicated bins
+    contig_mapping = {}
+    for bin in os.listdir(consolidated_bins):
+        bin_path = os.path.join(consolidated_bins, bin)
+        with open(bin_path, 'r') as file_in:
+            for record in SeqIO.parse(file_in, "fasta"):
+                if record.id not in contig_mapping:
+                    contig_mapping[record.id] = bin
+                elif best_stats[bin] > best_stats[contig_mapping[record.id]]:
+                    contig_mapping[record.id] = bin
+
+    if not os.path.exists(dereplicated_bins):
+        os.mkdir(dereplicated_bins)
+    for bin in os.listdir(consolidated_bins):
+        bin_path = os.path.join(consolidated_bins, bin)
+        drep_bin_path = os.path.join(dereplicated_bins, bin)
+        with open(bin_path, 'r') as file_in, open(drep_bin_path, 'w') as file_out:
+            for record in SeqIO.parse(file_in, "fasta"):
+                if contig_mapping[record.id] == bin:
+                    SeqIO.write(record, file_out, "fasta")
+
+    # remove empty files
+    for item in os.listdir(dereplicated_bins):
+        if not os.stat(os.path.join(dereplicated_bins, item)).st_size:
+            os.remove(os.path.join(dereplicated_bins, item))
 
 
 if __name__ == '__main__':

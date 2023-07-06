@@ -20,6 +20,7 @@ ref_checkm = channel.fromPath("${params.checkm_ref_db}", checkIfExists: true)
 include { CHECKM2 as CHECKM_1} from '../modules/checkm2'
 include { CHECKM2 as CHECKM_2} from '../modules/checkm2'
 include { CHECKM2 as CHECKM_3} from '../modules/checkm2'
+include { CHECKM2 as CHECKM_FINAL} from '../modules/checkm2'
 include { RENAME_BINS as RENAME_BINNER1} from '../modules/utils'
 include { RENAME_BINS as RENAME_BINNER2} from '../modules/utils'
 include { RENAME_BINS as RENAME_BINNER3} from '../modules/utils'
@@ -66,4 +67,6 @@ workflow REFINEMENT {
                 REFINE23.out.filtered_bins_stats).concat(
                 REFINE123.out.filtered_bins_stats)
     CONSOLIDATE_BINS(binners.collect(), stats.collect())
+
+    CHECKM_FINAL(channel.value("final"), CONSOLIDATE_BINS.out.dereplicated_bins, ref_checkm)
 }

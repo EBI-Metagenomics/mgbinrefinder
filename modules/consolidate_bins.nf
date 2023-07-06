@@ -15,6 +15,7 @@ process CONSOLIDATE_BINS {
     output:
     path("consolidated_bins"), emit: consolidated_bins
     path("consolidated_stats.tsv"), emit: consolidated_stats
+    path("dereplicated_bins/*"), emit: dereplicated_bins
 
     script:
     """

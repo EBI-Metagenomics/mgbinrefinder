@@ -276,8 +276,8 @@ for each_refined_bin in refined_bins:
         each_refined_bin_length = int(each_refined_bin_split[4][:-2])
         each_refined_bin_contig = each_refined_bin_split[5:]
 
-    stdout.write('\rExtracting refined bin: %s.fasta' % each_refined_bin_name)
-    refined_bin_file = '%s/%s/Refined/%s.fasta' % (wd, output_folder, each_refined_bin_name)
+    stdout.write('\rExtracting refined bin: %s.fa' % each_refined_bin_name)
+    refined_bin_file = '%s/%s/Refined/%s.fa' % (wd, output_folder, each_refined_bin_name)
     refined_bin_handle = open(refined_bin_file, 'w')
     input_contigs_file = '%s/%s/combined_%s_bins.fa' % (wd, output_folder, input_bin_folder_1)
     input_contigs = SeqIO.parse(input_contigs_file, 'fasta')
