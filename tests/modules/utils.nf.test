@@ -1,0 +1,35 @@
+nextflow_process {
+
+    name "Test size and rename"
+    script "modules/utils.nf"
+    process "RENAME_AND_CHECK_SIZE_BINS"
+
+    test("check size small file") {
+        when {
+            process {
+                """
+                input[0] = channel.value("rename")
+                input[1] = channel.fromPath("${baseDir}/tests/resources/binner1/b1.bin.0.fa")
+                """
+            }
+        }
+        then {
+            assert process.success
+            assert snapshot(process.out).match()
+        }
+    }
+    test("check big size") {
+        when {
+            process {
+                """
+                input[0] = channel.value("rename")
+                input[1] = channel.fromPath("/Users/kates/Desktop/EBI/pipelines/motus_pipeline/results/taxonomy-summary/krona.html")
+                """
+            }
+        }
+        then {
+            assert process.success
+            assert snapshot(process.out).match()
+        }
+    }
+}

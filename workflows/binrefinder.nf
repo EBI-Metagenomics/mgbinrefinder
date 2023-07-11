@@ -21,9 +21,9 @@ include { CHECKM2 as CHECKM_1} from '../modules/checkm2'
 include { CHECKM2 as CHECKM_2} from '../modules/checkm2'
 include { CHECKM2 as CHECKM_3} from '../modules/checkm2'
 include { CHECKM2 as CHECKM_FINAL} from '../modules/checkm2'
-include { RENAME_BINS as RENAME_BINNER1} from '../modules/utils'
-include { RENAME_BINS as RENAME_BINNER2} from '../modules/utils'
-include { RENAME_BINS as RENAME_BINNER3} from '../modules/utils'
+include { RENAME_AND_CHECK_SIZE_BINS as RENAME_BINNER1} from '../modules/utils'
+include { RENAME_AND_CHECK_SIZE_BINS as RENAME_BINNER2} from '../modules/utils'
+include { RENAME_AND_CHECK_SIZE_BINS as RENAME_BINNER3} from '../modules/utils'
 include { REFINE as REFINE12} from '../subworkflows/refine'
 include { REFINE as REFINE13} from '../subworkflows/refine'
 include { REFINE as REFINE23} from '../subworkflows/refine'
@@ -40,8 +40,14 @@ workflow REFINEMENT {
     RENAME_BINNER3(channel.value("binner3"), binner3)
 
     renamed_binner1 = RENAME_BINNER1.out.renamed.collect()
+    size_1 = renamed_binner1.size()
+    size_1.subscribe { println "Filter results: Binner1: $it.value" }
     renamed_binner2 = RENAME_BINNER2.out.renamed.collect()
+    size_2 = renamed_binner2.size()
+    size_2.subscribe { println "Filter results: Binner2: $it.value" }
     renamed_binner3 = RENAME_BINNER3.out.renamed.collect()
+    size_3 = renamed_binner3.size()
+    size_3.subscribe { println "Filter results: Binner3: $it.value" }
 
     REFINE12(channel.value("binner12"), renamed_binner1, renamed_binner2, channel.fromPath('NO_FILE'), ref_checkm)
     REFINE13(channel.value("binner13"), renamed_binner1, renamed_binner3, channel.fromPath('NO_FILE'), ref_checkm)
