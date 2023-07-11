@@ -32,7 +32,7 @@ process CHECKM2 {
     cat ${name}.checkm2.tsv | \
         tr ',' '\\t' |\
         grep -v "completeness" |\
-        awk '{{if(\$2>=70 && \$2<=100 && \$3>=0 && \$3<=10){{print \$0}}}}' >> ${name}_filtered_genomes.tsv
+        awk '{{if(\$2>=50 && \$2<=100 && \$3>=0 && \$3<=5){{print \$0}}}}' >> ${name}_filtered_genomes.tsv
 
     echo "choose genomes"
     mkdir -p ${name}_filtered_genomes
