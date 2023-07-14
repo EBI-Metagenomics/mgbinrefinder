@@ -94,20 +94,17 @@ for bin_1 in good_bins_1:
 		mismatch_2_length=0
 
 		for contig in bins_1[bin_1]:
-			if contig in bins_2[bin_2]:
-				match_1_length+=bins_2[bin_2][contig]
-			else:
-				mismatch_1_length+=bins_1[bin_1][contig]
+			if contig in bins_2[bin_2]: match_1_length+=bins_2[bin_2][contig]
+			else: mismatch_1_length+=bins_1[bin_1][contig]
 		for contig in bins_2[bin_2]:
-            if contig in bins_1[bin_1]:
-				match_2_length+=bins_1[bin_1][contig]
-			else:
-				mismatch_2_length+=bins_2[bin_2][contig]
+                        if contig in bins_1[bin_1]: match_2_length+=bins_1[bin_1][contig]
+			else: mismatch_2_length+=bins_2[bin_2][contig]
 
+		print(bin_1, bin_2)
 		# chose the highest % ID, dependinsh of which bin is  asubset of the other
 		ratio_1=100*match_1_length/(match_1_length+mismatch_1_length)
 		ratio_2=100*match_2_length/(match_2_length+mismatch_2_length)
-
+		print('ratio: ', max([ratio_1, ratio_2]))
 		all_bin_pairs[bin_1][bin_2]=max([ratio_1, ratio_2])
 
 
@@ -149,12 +146,15 @@ for bin_1 in all_bin_pairs:
 		bins_2_matches[bin_2]=None
 		# check if this bin is better than original
 		if (bins_2_stats[bin_2][0]-bins_2_stats[bin_2][1]*5) > score:
+			print(bin_1, bin_2, score, bins_2_stats[bin_2][0]-bins_2_stats[bin_2][1]*5)
+			print('cp '+ bin_2 + ' to bin. ' + str(bin_ct))
 			cmd = "cp " + sys.argv[2] + '/' + bin_2 + " " + sys.argv[5] + "/bin." + str(bin_ct) + ".fa"
 			new_summary_file+="bin." + str(bin_ct) + "\t" + "\t".join(bins_2_summary[bin_2].split("\t")[1:])
 			found_better=True
 	if found_better==False: 
 		new_summary_file+="bin." + str(bin_ct) + "\t" + "\t".join(bins_1_summary[bin_1].split("\t")[1:])
 		cmd = "cp " + sys.argv[1] + '/' + bin_1 + " " + sys.argv[5] + "/bin." + str(bin_ct) + ".fa"
+		print('no better: cp '+ bin_1 + ' to bin. ' + str(bin_ct))
 	os.system(cmd)
 	bin_ct+=1
 

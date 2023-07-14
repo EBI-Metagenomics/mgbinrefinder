@@ -2,10 +2,11 @@
 # coding=utf-8
 
 import argparse
+import logging
 import os
 import sys
 from Bio import SeqIO
-from shutil import copy
+from shutil import copy, rmtree
 
 def get_stats(binner, stats):
     stats_dict = {}
@@ -15,9 +16,9 @@ def get_stats(binner, stats):
             stats_file = item
             break
     if not stats_file:
-        print('get_stats: No stats file. Exit')
+        logging.error('get_stats: No stats file. Exit')
         sys.exit(1)
-    print(f'get_stats: Process {stats_file}')
+    logging.info(f'get_stats: Process {stats_file}')
     with open(os.path.join(stats, stats_file)) as file_in:
         next(file_in)
         for line in file_in:
@@ -30,7 +31,7 @@ def get_bins_from_binner(binner_dir):
     for bin_name in os.listdir(binner_dir):
         bin_path = os.path.join(binner_dir, bin_name)
         binner_dict[bin_name] = {}
-        print(f'get_bins_from_binner: Add {bin_path}')
+        logging.debug(f'get_bins_from_binner: Add {bin_path}')
         with open(bin_path) as file_in:
             for record in SeqIO.parse(file_in, "fasta"):
                 binner_dict[bin_name][record.id] = len(record.seq)
@@ -39,17 +40,17 @@ def get_bins_from_binner(binner_dir):
 
 def process_pair(binner1, binner2, stats_path, bins_2_stats):
     if not binner2:
-        print(f'--> Add {binner1}')
+        logging.info('-'.join(['-']*20) + f'> Add {binner1}')
         return get_bins_from_binner(binner1), get_stats(binner1, stats_path)
     else:
-        print(f'--> Add {binner1}')
+        logging.info('-'.join(['-']*20) + f'> Add {binner1}')
         bins1 = get_bins_from_binner(binner1)
         bins2 = binner2
         all_bin_pairs = {}
         for bin_1 in bins1:
             all_bin_pairs[bin_1] = {}
             for bin_2 in bins2:
-                # find idential contigs between bin_1 and bin_2
+                # find identical contigs between bin_1 and bin_2
                 match_1_length, match_2_length, mismatch_1_length, mismatch_2_length = [0 for _ in range(4)]
                 for contig in bins1[bin_1]:
                     if contig in bins2[bin_2]:
@@ -61,17 +62,23 @@ def process_pair(binner1, binner2, stats_path, bins_2_stats):
                         match_2_length += bins1[bin_1][contig]
                     else:
                         mismatch_2_length += bins2[bin_2][contig]
-            # chose the highest % ID, dependinsh of which bin is a subset of the other
-            ratio_1 = 100 * match_1_length / (match_1_length + mismatch_1_length)
-            ratio_2 = 100 * match_2_length / (match_2_length + mismatch_2_length)
-            if max([ratio_1, ratio_2]) >= 80:
-                all_bin_pairs[bin_1][bin_2] = max([ratio_1, ratio_2])
-            else:
+
+                logging.debug(f'compare {bin_1} vs {bin_2}')
+                # chose the highest % ID, dependinsh of which bin is a subset of the other
+                ratio_1 = 100 * match_1_length / (match_1_length + mismatch_1_length)
+                ratio_2 = 100 * match_2_length / (match_2_length + mismatch_2_length)
+                logging.debug(f'ratio: {max([ratio_1, ratio_2])}')
+                if max([ratio_1, ratio_2]) >= 80:
+                    all_bin_pairs[bin_1][bin_2] = max([ratio_1, ratio_2])
+            if all_bin_pairs[bin_1] == {}:
                 all_bin_pairs.pop(bin_1)
+
         if not all_bin_pairs:
-            print('No ratios > 80')
+            logging.info('No ratios > 80')
             return bins2, bins_2_stats
-        print('all', all_bin_pairs)
+        logging.debug(f'all_bin_pair ratios {all_bin_pairs}')
+
+        logging.info("Choose best bin in pair")
         # choose bins
         best_bins, best_bins_stats, best_bins_contigs = {}, {}, {}
         bins_2_matches = []
@@ -84,6 +91,7 @@ def process_pair(binner1, binner2, stats_path, bins_2_stats):
             current_stats = bins_1_stats[bin_1]
 
             for bin_2 in all_bin_pairs[bin_1]:
+                logging.debug(f'compare: >>> {bin_1} with {score}')
                 # check for sufficient overlap (80% bin length)
                 bins_2_matches.append(bin_2)
                 # check if this bin is better than original
@@ -91,6 +99,25 @@ def process_pair(binner1, binner2, stats_path, bins_2_stats):
                     current_bin = bin_2
                     current_contigs = bins2[bin_2]
                     current_stats = bins_2_stats[bin_2]
+                    logging.debug(
+                        f'compare: {bin_2} better then {bin_1} {bins_2_stats[bin_2][0] - bins_2_stats[bin_2][1] * 5} > {score}')
+                elif (bins_2_stats[bin_2][0] - bins_2_stats[bin_2][1] * 5) == score:
+                    logging.debug(
+                        f'compare: {bin_2} the same as {bin_1} {bins_2_stats[bin_2][0] - bins_2_stats[bin_2][1] * 5} = {score}')
+                    if bins_1_stats[bin_1][0] > bins_2_stats[bin_2][0] and bins_1_stats[bin_1][1] < bins_2_stats[bin_2][1]:
+                        logging.debug(
+                            f'compare: {bin_1} better {bin_2} by completeness and contamination')
+                    elif bins_1_stats[bin_1][0] == bins_2_stats[bin_2][0] and bins_1_stats[bin_1][1] == bins_2_stats[bin_2][1]:
+                        logging.debug(
+                            f'compare: {bin_1} [{len(bins1[bin_1])} contigs] the same as {bin_2} [{len(bins2[bin_2])} contigs] by completeness and contamination')
+                    elif bins_1_stats[bin_1][0] < bins_2_stats[bin_2][0] and bins_1_stats[bin_1][1] > bins_2_stats[bin_2][1]:
+                        logging.debug(
+                            f'compare: {bin_2} better {bin_1} by completeness and contamination')
+                    else:
+                        logging.debug(
+                            f'compare: difficult case {bin_1} [{len(bins1[bin_1])} contigs] ({bins_1_stats[bin_1][0]}, {bins_1_stats[bin_1][1]}) vs {bin_2} [{len(bins2[bin_2])} contigs] ({bins_2_stats[bin_2][0]}, {bins_2_stats[bin_2][1]})')
+                else:
+                    logging.debug(f'compare: {bin_1} wins')
             best_bins_contigs[current_bin] = current_contigs
             best_bins_stats[current_bin] = current_stats
 
@@ -106,6 +133,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description='The script creates a file that matches ERZ and read accessions')
     parser.add_argument('-i', '--input', required=True, nargs='+', help='Folders with bins')
     parser.add_argument('-s', '--stats', required=True, help='Folders with checkm stats')
+    parser.add_argument('-v', '--verbose', action="store_true")
     return parser.parse_args()
 
 
@@ -113,20 +141,30 @@ def main(args):
     consolidated_bins = "consolidated_bins"
     dereplicated_bins = "dereplicated_bins"
     binners = args.input
+    if args.verbose:
+        logging.basicConfig(level=logging.DEBUG)
+    else:
+        logging.basicConfig(level=logging.INFO)
     if len(binners) < 2:
-        print('Number of binners is less then 2. Check you input')
+        logging.info('Number of binners is less then 2. Check you input')
         sys.exit(1)
     else:
-        print(f'---> Processing {len(binners)} input binners')
+        logging.info('-'.join(['-']*20) + f'---> Processing {len(binners)} input binners')
         best_bins, best_stats = {}, {}
         for binner in binners:
             bins, stats = process_pair(binner, best_bins, args.stats, best_stats)
             best_bins = bins
             best_stats = stats
-            print('best', bins, best_stats)
+            logging.info(f'best set has {len(best_stats)} bins')
+            for bin in bins:
+                logging.debug(f'{bin} has {len(list(bins[bin].keys()))} contigs')
+            logging.debug(f'stats {best_stats}')
 
     # consolidate folder and stats
     if not os.path.exists(consolidated_bins):
+        os.mkdir(consolidated_bins)
+    else:
+        rmtree(consolidated_bins)
         os.mkdir(consolidated_bins)
     for bin in best_bins:
         for binner in binners:
