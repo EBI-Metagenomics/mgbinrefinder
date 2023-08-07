@@ -14,6 +14,7 @@ Improvements:
 # Installation
 - [Nextflow](https://www.nextflow.io/)
 - [conda](https://docs.conda.io/en/latest/)
+- [checkm2](https://github.com/chklovski/CheckM2) 
 
 ```commandline
 # activate nextflow env

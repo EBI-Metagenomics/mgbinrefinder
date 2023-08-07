@@ -19,6 +19,6 @@ process CONSOLIDATE_BINS {
 
     script:
     """
-    consolidate_bins.py -i ${binner_folders} -s stats
+    consolidate_bins.py -i ${binner_folders} -s stats -v
     """
 }
