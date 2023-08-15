@@ -5,11 +5,12 @@ Quick and efficient Nextflow bin refinement tool.
 Scripts and ideas were taken from [metaWRAP](https://github.com/bxlab/metaWRAP)
 
 Improvements:
-- python scripts were optimised and re-writen to python3
+- python scripts were optimised and re-written to python3
    - [consolidate_two_sets_of_bins.py](bin%2Fmetawrap%2Fconsolidate_two_sets_of_bins.py) and [dereplicate_contigs_in_bins.py](bin%2Fmetawrap%2Fdereplicate_contigs_in_bins.py) scripts were united into [consolidate_bins.py](bin%2Fconsolidate_bins.py)
 - bash wrapper replaced with nextflow
 - checkm v1 replaced with checkm v2
 - checkm steps are running in parallel
+- decision score changed from `completeness - 5 * contamination` to `completeness - 5 * contamination + 0.5 * log(N50)` 
 
 # Installation
 - [Nextflow](https://www.nextflow.io/)

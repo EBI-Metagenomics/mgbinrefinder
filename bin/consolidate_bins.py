@@ -7,6 +7,20 @@ import os
 import sys
 from Bio import SeqIO
 from shutil import copy, rmtree
+import numpy as np
+import math
+
+def calculate_n50(seq_lens):
+    seq_array = np.array(seq_lens)
+    sorted_lens = seq_array[np.argsort(-seq_array)]
+    csum = np.cumsum(sorted_lens)
+    level = 50
+    nx = int(int(np.sum(sorted_lens)) * (level / 100))
+    csumn = min(csum[csum >= nx])
+    l_level = int(np.where(csum == csumn)[0])
+    n_level = int(sorted_lens[l_level])
+    return n_level
+
 
 def get_stats(binner, stats):
     stats_dict = {}
@@ -85,7 +99,8 @@ def process_pair(binner1, binner2, stats_path, bins_2_stats):
 
         bins_1_stats = get_stats(binner1, stats_path)
         for bin_1 in all_bin_pairs:
-            score = bins_1_stats[bin_1][0] - bins_1_stats[bin_1][1] * 5
+            N50 = calculate_n50(list(bins1[bin_1].values()))
+            score = bins_1_stats[bin_1][0] - bins_1_stats[bin_1][1] * 5 + 0.5 * math.log(N50)
             current_bin = bin_1
             current_contigs = bins1[bin_1]
             current_stats = bins_1_stats[bin_1]
@@ -95,7 +110,8 @@ def process_pair(binner1, binner2, stats_path, bins_2_stats):
                 # check for sufficient overlap (80% bin length)
                 bins_2_matches.append(bin_2)
                 # check if this bin is better than original
-                if (bins_2_stats[bin_2][0] - bins_2_stats[bin_2][1] * 5) > score:
+                N50 = calculate_n50(list(bins2[bin_2].values()))
+                if (bins_2_stats[bin_2][0] - bins_2_stats[bin_2][1] * 5 + 0.5 * math.log(N50)) > score:
                     current_bin = bin_2
                     current_contigs = bins2[bin_2]
                     current_stats = bins_2_stats[bin_2]
