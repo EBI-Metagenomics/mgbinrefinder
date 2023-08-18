@@ -8,7 +8,7 @@ nextflow_process {
         when {
             process {
                 """
-                input[0] = channel.value("binner123")
+                input[0] = channel.value("binner12")
                 input[1] = channel.fromPath("${baseDir}/tests/resources/binner1")
                 input[2] = channel.fromPath("${baseDir}/tests/resources/binner2")
                 input[3] = channel.fromPath("NO_FILE")

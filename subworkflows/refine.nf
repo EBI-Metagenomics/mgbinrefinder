@@ -1,5 +1,6 @@
-include { BINNING_REFINER } from '../modules/binning_refiner'
-include { CHECKM2 } from '../modules/checkm2'
+include { BINNING_REFINER   } from '../modules/binning_refiner'
+include { CHECKM2           } from '../modules/checkm2'
+
 workflow REFINE {
     take:
         name

@@ -2,12 +2,6 @@ process CHECKM2 {
 
     tag "${name}"
 
-    publishDir(
-        path: "${params.outdir}/checkm2",
-        mode: 'copy',
-        failOnError: true
-    )
-
     input:
     val(name)
     path(bins)
