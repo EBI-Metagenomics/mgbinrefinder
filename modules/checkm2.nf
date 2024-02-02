@@ -1,12 +1,7 @@
 process CHECKM2 {
 
+    errorStrategy {'ignore'}
     label 'process_medium'
-    errorStrategy =
-    {
-        if (task.exitStatus == 1) { return 'ignore' }
-        else if (task.exitStatus in ((130..145) + 104 + 1)) { return 'retry' }
-        else { return 'finish' }
-    }
 
     tag "${name} ${meta.id}"
 
