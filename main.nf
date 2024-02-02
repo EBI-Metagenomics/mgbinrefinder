@@ -2,7 +2,7 @@
 
 nextflow.enable.dsl = 2
 
-include { REFINEMENT } from './workflows/binrefinder'
+include { REFINEMENT } from './workflows/test'
 
 workflow {
     REFINEMENT ()

@@ -35,7 +35,20 @@ import argparse
 from time import sleep
 from sys import stdout
 from Bio import SeqIO
+import shutil
 
+def check_folder(directory):
+    if not directory:
+        return None
+    if len(os.listdir(directory)) == 0:
+        print(f"No data in {directory}")
+        return None
+    else:
+        print(f"There are {len(os.listdir(directory))} bins in {directory}")
+    if directory[-1] == '/':
+        return directory[:-1]
+    else:
+        return directory
 
 ##################################################### CONFIGURATION ####################################################
 
@@ -68,48 +81,31 @@ parser.add_argument('-ms',
                     help='(optional) minimum size for refined bins, default = 524288 (0.5Mbp)')
 
 args = vars(parser.parse_args())
-output_dir = args['o']
-output_name = args['n']
-if output_dir[-1]=='/':
-    output_dir=output_dir[:-1]
 
-input_bin_folder_1 = args['1']
-if input_bin_folder_1[-1] == '/':
-    input_bin_folder_1 = input_bin_folder_1[:-1]
+wd = os.getcwd()
+output_folder = '%s/%s' % (wd, args.get('o'))
+output_name = args.get('n')
+if not os.path.exists(os.path.join(wd, output_folder, 'Refined')):
+    os.mkdir(os.path.join(wd, output_folder, 'Refined'))
 
-input_bin_folder_2 = args['2']
-if input_bin_folder_2[-1] == '/':
-    input_bin_folder_2 = input_bin_folder_2[:-1]
-
-if args['3'] != None:
-    input_bin_folder_3 = args['3']
-    if input_bin_folder_3[-1] == '/':
-        input_bin_folder_3 = input_bin_folder_3[:-1]
+# check given folders
+input_bin_folder_1 = check_folder(args.get('1'))
+input_bin_folder_2 = check_folder(args.get('2'))
+input_bin_folder_3 = check_folder(args.get('3'))
+# get input bin folder list
+input_bin_folder_list = [i for i in [input_bin_folder_1, input_bin_folder_2, input_bin_folder_3] if i]
+print(f"Given {len(input_bin_folder_list)} not empty bin folders")
+if len(input_bin_folder_list) == 1:
+    print("No refinement needed")
+    for bin in os.listdir(input_bin_folder_list[0]):
+        shutil.copy(os.path.join(input_bin_folder_list[0], bin), os.path.join(wd, output_folder, 'Refined', bin))
+    exit()
 
 bin_size_cutoff = args['ms']
 bin_size_cutoff_MB = float("{0:.2f}".format(bin_size_cutoff / (1024 * 1024)))
 
-# get input bin folder list
-input_bin_folder_list = []
-if args['3'] == None:
-    print('Specified 2 input bin sets: -1 %s -2 %s' % (input_bin_folder_1, input_bin_folder_2))
-    input_bin_folder_list = [input_bin_folder_1, input_bin_folder_2]
-else:
-    print('Specified 3 input bin sets: -1 %s -2 %s -3 %s' % (input_bin_folder_1, input_bin_folder_2, input_bin_folder_3))
-    input_bin_folder_list = [input_bin_folder_1, input_bin_folder_2, input_bin_folder_3]
-
 ################################################ Define folder/file name ###############################################
-
-wd = os.getcwd()
-output_folder = output_dir
-pwd_output_folder = '%s/%s' % (wd, output_folder)
-
 ########################################################################################################################
-
-# get bin name list
-bin_folder_1_bins_files = '%s/%s/*.fa*' % (wd, input_bin_folder_1)
-bin_folder_2_bins_files = '%s/%s/*.fa*' % (wd, input_bin_folder_2)
-
 
 # check input files
 folder_bins_dict = {}
@@ -256,8 +252,6 @@ contig_assignments_sorted_one_line.close()
 refined_bin_number = n
 sleep(1)
 print('The number of refined bins: %s' % refined_bin_number)
-
-os.mkdir(os.path.join(wd, output_folder, 'Refined'))
 
 refined_bins = open(contig_assignments_file_sorted_one_line)
 
