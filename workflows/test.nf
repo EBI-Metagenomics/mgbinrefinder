@@ -57,9 +57,29 @@ workflow REFINEMENT {
     REFINE23( "binner23", renamed_binner2, renamed_binner3, empty_output, ref_checkm )
     REFINE123( "binner123", renamed_binner1, renamed_binner2, renamed_binner3, ref_checkm )
 
-    binners = REFINE12.out.filtered_bins
-        .join(REFINE13.out.filtered_bins)
-        .join(REFINE23.out.filtered_bins)
-        .join(REFINE123.out.filtered_bins)
-    binners.view()
+    CHECKM2_BINNER1( "binner1", renamed_binner1, ref_checkm )
+    CHECKM2_BINNER2( "binner2", renamed_binner2, ref_checkm )
+    CHECKM2_BINNER3( "binner3", renamed_binner3, ref_checkm )
+
+    ch_versions = ch_versions.mix( CHECKM2_BINNER1.out.versions.first() )
+    ch_versions = ch_versions.mix( CHECKM2_BINNER2.out.versions.first() )
+    ch_versions = ch_versions.mix( CHECKM2_BINNER3.out.versions.first() )
+
+    binners = CHECKM2_BINNER1.out.filtered_genomes.ifEmpty(empty_output)
+        .join(CHECKM2_BINNER2.out.filtered_genomes.ifEmpty(empty_output))
+        .join(CHECKM2_BINNER3.out.filtered_genomes.ifEmpty(empty_output))
+        .join(REFINE12.out.filtered_bins.ifEmpty(empty_output))
+        .join(REFINE13.out.filtered_bins.ifEmpty(empty_output))
+        .join(REFINE23.out.filtered_bins.ifEmpty(empty_output))
+        .join(REFINE123.out.filtered_bins.ifEmpty(empty_output))
+
+    stats = CHECKM2_BINNER1.out.filtered_stats.ifEmpty(empty_output)
+        .join(CHECKM2_BINNER2.out.filtered_stats.ifEmpty(empty_output))
+        .join(CHECKM2_BINNER3.out.filtered_stats.ifEmpty(empty_output))
+        .join(REFINE12.out.filtered_bins_stats.ifEmpty(empty_output))
+        .join(REFINE13.out.filtered_bins_stats.ifEmpty(empty_output))
+        .join(REFINE23.out.filtered_bins_stats.ifEmpty(empty_output))
+        .join(REFINE123.out.filtered_bins_stats.ifEmpty(empty_output))
+
+    CONSOLIDATE_BINS( binners, stats )
 }
