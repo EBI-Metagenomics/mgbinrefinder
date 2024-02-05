@@ -14,7 +14,7 @@ process CHECKM2 {
 
     input:
     val(name)
-    tuple val(meta), path(bins)
+    tuple val(meta), path(bins, stageAs: "bins/*")
     path checkm2_db
 
     output:

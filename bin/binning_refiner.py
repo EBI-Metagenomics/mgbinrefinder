@@ -94,7 +94,7 @@ if os.path.exists(output_folder):
     shutil.rmtree(output_folder)
 os.mkdir(output_folder)
 print(f'Output folder {output_folder}')
-refined_output_folder = os.path.join(output_folder, 'Refined')
+refined_output_folder = os.path.join(output_folder, 'refined')
 if not os.path.exists(refined_output_folder):
     os.mkdir(refined_output_folder)
 print(f'Refined output {refined_output_folder}')
@@ -172,7 +172,6 @@ with open(contig_assignments_file_sorted, 'r') as contig_assignments_sorted, ope
     current_length_total = 0
     n = 1
     for each in contig_assignments_sorted:
-        print(each, current_match, current_match_contigs, current_length_total)
         each_split = each.strip().split('\t')
         current_contig = each_split[-2]
         current_length = int(each_split[-1])
@@ -221,9 +220,8 @@ for each_refined_bin in refined_bins:
 
     stdout.write('\rExtracting refined bin: %s.fa' % each_refined_bin_name)
     refined_bin_file = os.path.join(refined_output_folder, f'{each_refined_bin_name}.fa')
-    input_contigs_file = os.path.join(output_folder, f'combined_{input_bin_folder_1}_bins.fa')
     with open(refined_bin_file, 'w') as refined_bin_handle:
-        input_contigs = SeqIO.parse(input_contigs_file, 'fasta')
+        input_contigs = SeqIO.parse(combined_all_bins_file, 'fasta')
         for each_input_contig in input_contigs:
             each_input_contig_id = each_input_contig.id.split(SEPARATOR)[-1]
             if each_input_contig_id in each_refined_bin_contig:

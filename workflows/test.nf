@@ -56,4 +56,10 @@ workflow REFINEMENT {
     REFINE13( "binner13", renamed_binner1, renamed_binner3, empty_output, ref_checkm )
     REFINE23( "binner23", renamed_binner2, renamed_binner3, empty_output, ref_checkm )
     REFINE123( "binner123", renamed_binner1, renamed_binner2, renamed_binner3, ref_checkm )
+
+    binners = REFINE12.out.filtered_bins
+        .join(REFINE13.out.filtered_bins)
+        .join(REFINE23.out.filtered_bins)
+        .join(REFINE123.out.filtered_bins)
+    binners.view()
 }
