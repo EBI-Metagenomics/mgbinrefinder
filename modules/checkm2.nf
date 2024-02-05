@@ -1,15 +1,20 @@
 process CHECKM2 {
 
-    errorStrategy {'ignore'}
     label 'process_medium'
-
+    //afterScript 'touch ${name}_filtered_genomes'
+    errorStrategy =
+    {
+        if (task.exitStatus == 1) { return 'ignore' }
+        else if (task.exitStatus in ((130..145) + 104 + 1)) { return 'retry' }
+        else { return 'finish' }
+    }
     tag "${name} ${meta.id}"
 
     container 'quay.io/biocontainers/checkm2:1.0.1--pyh7cba7a3_0'
 
     input:
     val(name)
-    tuple val(meta), path(bins, stageAs: "bins/*")  // bins can be a list or directory (checkm2 supports both)
+    tuple val(meta), path(bins)
     path checkm2_db
 
     output:
@@ -20,6 +25,7 @@ process CHECKM2 {
 
     script:
     """
+    mkdir -p bins
     echo "checkm predict"
     checkm2 predict --threads ${task.cpus} \
         --input bins \

@@ -12,19 +12,17 @@ workflow REFINE {
     main:
 
     ch_versions = Channel.empty()
-    empty_output = binner1.map{meta, _ -> return tuple(meta, [])}
 
-    BINNING_REFINER( name, binner1.join( binner2 ).join( binner3 ) )
-    refined = BINNING_REFINER.out.refined_bins.ifEmpty(empty_output)
+    BINNING_REFINER( name, binner1, binner2, binner3 )
+    refined = BINNING_REFINER.out.refined_bins
     ch_versions = ch_versions.mix( BINNING_REFINER.out.versions.first() )
 
-    //CHECKM2_REFINE( name, refined, checkm2_db )
-
+    CHECKM2_REFINE( name, refined, checkm2_db )
     //ch_versions = ch_versions.mix( CHECKM2_REFINE.out.versions.first() )
 
     emit:
     refined = refined
-    //filtered_bins = CHECKM2_REFINE.out.filtered_genomes
-    //filtered_bins_stats = CHECKM2_REFINE.out.filtered_stats
+    filtered_bins = CHECKM2_REFINE.out.filtered_genomes
+    filtered_bins_stats = CHECKM2_REFINE.out.filtered_stats
     versions = ch_versions
 }
