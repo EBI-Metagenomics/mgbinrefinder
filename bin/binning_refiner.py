@@ -206,27 +206,23 @@ refined_bins = open(contig_assignments_file_sorted_one_line)
 for each_refined_bin in refined_bins:
     each_refined_bin_split = each_refined_bin.strip().split('\t')
     each_refined_bin_name = output_name + '_' + each_refined_bin_split[0]
-    each_refined_bin_length = 0
-    each_refined_bin_contig = []
     if len(input_bin_folder_list) == 2:
-        each_refined_bin_source = each_refined_bin_split[1:3]
-        each_refined_bin_length = int(each_refined_bin_split[3][:-2])
         each_refined_bin_contig = each_refined_bin_split[4:]
-
     if len(input_bin_folder_list) == 3:
-        each_refined_bin_source = each_refined_bin_split[1:4]
-        each_refined_bin_length = int(each_refined_bin_split[4][:-2])
         each_refined_bin_contig = each_refined_bin_split[5:]
 
-    stdout.write('\rExtracting refined bin: %s.fa' % each_refined_bin_name)
+    added_contigs = []
+    stdout.write(f'Extracting refined bin: {each_refined_bin_name}.fa')
     refined_bin_file = os.path.join(refined_output_folder, f'{each_refined_bin_name}.fa')
     with open(refined_bin_file, 'w') as refined_bin_handle:
         input_contigs = SeqIO.parse(combined_all_bins_file, 'fasta')
         for each_input_contig in input_contigs:
             each_input_contig_id = each_input_contig.id.split(SEPARATOR)[-1]
             if each_input_contig_id in each_refined_bin_contig:
-                each_input_contig.id = each_input_contig_id
-                each_input_contig.description = ''
-                SeqIO.write(each_input_contig, refined_bin_handle, 'fasta')
+                if each_input_contig_id not in added_contigs:
+                    each_input_contig.id = each_input_contig_id
+                    each_input_contig.description = ''
+                    SeqIO.write(each_input_contig, refined_bin_handle, 'fasta')
+                    added_contigs.append(each_input_contig_id)
 
 
