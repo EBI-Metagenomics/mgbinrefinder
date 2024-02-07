@@ -7,31 +7,58 @@ import os
 import sys
 from Bio import SeqIO
 from shutil import copy, rmtree
+import numpy as np
+import math
+from itertools import combinations
+
+
+def calculate_n50(seq_lens):
+    seq_array = np.array(seq_lens)
+    sorted_lens = seq_array[np.argsort(-seq_array)]
+    csum = np.cumsum(sorted_lens)
+    level = 50
+    nx = int(int(np.sum(sorted_lens)) * (level / 100))
+    csumn = min(csum[csum >= nx])
+    l_level = int(np.where(csum == csumn)[0])
+    n_level = int(sorted_lens[l_level])
+    return n_level
+
 
 def get_stats(binner, stats):
+    """Get the stats file for a binner.
+    The stats folder contains the stats for each binner, and also the
+    combination of binners (such as binner1, binner12...)
+    """
+    # We need to add the prefix _ at the end of the binner name
+    # to be sure we pick the right binner stat file
+    # the binner stats files are named, i.e.: binner2_filtered_genomes.tsv binner23_filtered_genomes.tsv
+    # for binner2 we may get binner23 if not prefixed with _
+    binner = f"{binner}_"
     stats_dict = {}
     stats_file = None
+    logging.debug(f"{binner}")
     for item in os.listdir(stats):
         if binner in item:
             stats_file = item
             break
     if not stats_file:
-        logging.error('get_stats: No stats file. Exit')
+        logging.error("get_stats: No stats file. Exit")
         sys.exit(1)
-    logging.info(f'get_stats: Process {stats_file}')
+    logging.debug(f"get_stats: Process {stats_file}")
     with open(os.path.join(stats, stats_file)) as file_in:
         next(file_in)
         for line in file_in:
-            line = line.strip().split('\t')
-            stats_dict[line[0] + '.fa'] = [float(line[1]), float(line[2])]
+            line = line.strip().split("\t")
+            stats_dict[line[0] + ".fa"] = [float(line[1]), float(line[2])]
     return stats_dict
+
 
 def get_bins_from_binner(binner_dir):
     binner_dict = {}
     for bin_name in os.listdir(binner_dir):
         bin_path = os.path.join(binner_dir, bin_name)
         binner_dict[bin_name] = {}
-        logging.debug(f'get_bins_from_binner: Add {bin_path}')
+        logging.debug(f"get_bins_from_binner: Add {bin_path}")
         with open(bin_path) as file_in:
             for record in SeqIO.parse(file_in, "fasta"):
                 binner_dict[bin_name][record.id] = len(record.seq)
@@ -85,7 +112,8 @@ def process_pair(binner1, binner2, stats_path, bins_2_stats):
 
         bins_1_stats = get_stats(binner1, stats_path)
         for bin_1 in all_bin_pairs:
-            score = bins_1_stats[bin_1][0] - bins_1_stats[bin_1][1] * 5
+            N50 = calculate_n50(list(bins1[bin_1].values()))
+            score = bins_1_stats[bin_1][0] - bins_1_stats[bin_1][1] * 5 + 0.5 * math.log(N50)
             current_bin = bin_1
             current_contigs = bins1[bin_1]
             current_stats = bins_1_stats[bin_1]
@@ -95,7 +123,8 @@ def process_pair(binner1, binner2, stats_path, bins_2_stats):
                 # check for sufficient overlap (80% bin length)
                 bins_2_matches.append(bin_2)
                 # check if this bin is better than original
-                if (bins_2_stats[bin_2][0] - bins_2_stats[bin_2][1] * 5) > score:
+                N50 = calculate_n50(list(bins2[bin_2].values()))
+                if (bins_2_stats[bin_2][0] - bins_2_stats[bin_2][1] * 5 + 0.5 * math.log(N50)) > score:
                     current_bin = bin_2
                     current_contigs = bins2[bin_2]
                     current_stats = bins_2_stats[bin_2]
@@ -140,14 +169,27 @@ def parse_args():
 def main(args):
     consolidated_bins = "consolidated_bins"
     dereplicated_bins = "dereplicated_bins"
-    binners = args.input
+    input_binners = args.input
     if args.verbose:
         logging.basicConfig(level=logging.DEBUG)
     else:
         logging.basicConfig(level=logging.INFO)
+    binners = []
+    for binner in input_binners:
+        if os.path.exists(binner):
+            if os.listdir(binner):
+                binners.append(binner)
     if len(binners) < 2:
-        logging.info('Number of binners is less then 2. Check you input')
-        sys.exit(1)
+        logging.info('Number of binners is less then 2. No consolidation')
+        if len(binners) == 1:
+            logging.info(f'Dereplicated bins would be taken from {binners[0]}')
+            if not os.path.exists(dereplicated_bins):
+                os.mkdir(dereplicated_bins)
+            with open("dereplicated_list.tsv", 'w') as file_out:
+                for item in os.listdir(binners[0]):
+                    copy(os.path.join(binners[0], item), os.path.join(dereplicated_bins, item))
+                    file_out.write(item + '\n')
+        sys.exit()
     else:
         logging.info('-'.join(['-']*20) + f'---> Processing {len(binners)} input binners')
         best_bins, best_stats = {}, {}
@@ -204,6 +246,10 @@ def main(args):
         if not os.stat(os.path.join(dereplicated_bins, item)).st_size:
             os.remove(os.path.join(dereplicated_bins, item))
 
+    # write dereplicated_list.tsv
+    with open("dereplicated_list.tsv", 'w') as file_out:
+        drep_bins = os.listdir(dereplicated_bins)
+        file_out.write('\n'.join(drep_bins))
 
 if __name__ == '__main__':
     args = parse_args()

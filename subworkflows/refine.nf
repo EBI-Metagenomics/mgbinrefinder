@@ -1,22 +1,28 @@
-include { BINNING_REFINER } from '../modules/binning_refiner'
-include { CHECKM2 } from '../modules/checkm2'
+include { BINNING_REFINER                } from '../modules/binning_refiner'
+include { CHECKM2 as CHECKM2_REFINE      } from '../modules/checkm2'
+
 workflow REFINE {
     take:
-        name
-        binner1
-        binner2
-        binner3
-        checkm_db
-    main:
-        BINNING_REFINER(name, binner1, binner2, binner3)
-        size_refined_bins = BINNING_REFINER.out.refined_bins.collect().size()
-        size_refined_bins.subscribe { println "Refinder: $name.value: $it.value" }
+    name
+    binner1
+    binner2
+    binner3
+    checkm2_db
 
-        CHECKM2(name, BINNING_REFINER.out.refined_bins, checkm_db)
-        //size_filtered_bins = CHECKM2.out.checkm2_results_filtered.collect().size()
-        //size_filtered_bins.subscribe { println "Checkm2: $name.value: $it.value" }
+    main:
+
+    ch_versions = Channel.empty()
+
+    BINNING_REFINER( name, binner1, binner2, binner3 )
+    refined = BINNING_REFINER.out.refined_bins
+    ch_versions = ch_versions.mix( BINNING_REFINER.out.versions.first() )
+
+    CHECKM2_REFINE( name, refined, checkm2_db )
+    //ch_versions = ch_versions.mix( CHECKM2_REFINE.out.versions.first() )
+
     emit:
-        refined = BINNING_REFINER.out.refined_bins
-        filtered_bins = CHECKM2.out.checkm2_results_filtered
-        filtered_bins_stats = CHECKM2.out.checkm2_results_filtered_stats
+    refined = refined
+    filtered_bins = CHECKM2_REFINE.out.filtered_genomes
+    filtered_bins_stats = CHECKM2_REFINE.out.filtered_stats
+    versions = ch_versions
 }

@@ -1,22 +1,27 @@
 process RENAME_AND_CHECK_SIZE_BINS {
 
-    tag "${bin}"
+    label 'process_low'
+    tag "${meta.id}"
 
     input:
     val(name)
-    path(bin)
+    tuple val(meta), path(bins, stageAs: "bins_dir/*")
 
     output:
-    path("${name}.${bin.baseName}.fa"), emit: renamed, optional: true
+    tuple val(meta), path("out/*"), emit: renamed, optional: true
 
     script:
     """
-    SIZE=\$(stat -Lc "%s" ${bin})
-    if (( \$SIZE > 50000)) && (( \$SIZE < 20000000)); then
-        echo "\${SIZE}"
-        cp ${bin} ${name}.${bin.baseName}.fa
-    else
-        echo "Skipping ${bin} because the bin size \${SIZE} is not between 50kb and 20Mb"
-    fi
+    mkdir -p out bins_dir
+    cd bins_dir
+    for bin in \$(ls . ); do
+        SIZE=\$(stat -L -c "%s" \${bin})
+        if (( \$SIZE > 50)) && (( \$SIZE < 20000000)); then
+            echo "\${SIZE}"
+            cp \${bin} ../out
+        else
+            echo "Skipping \${bin} because the bin size \${SIZE} is not between 50kb and 20Mb"
+        fi
+    done
     """
 }
