@@ -14,6 +14,8 @@ process BINNING_REFINER {
     // versions
     tuple val("${task.process}"), val('python'), eval("python --version | sed 's/Python //g'"), topic: versions
     tuple val("${task.process}"), val('biopython'), eval("python -c 'import pkg_resources; print(pkg_resources.get_distribution(\"biopython\").version)'"), topic: versions
+    // logging
+    tuple val("${task.process}"), val('refine'), eval("ls ${meta.id}_output_${name}/refined | wc -l"), topic: logs
 
     script:
     """

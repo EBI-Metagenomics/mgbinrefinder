@@ -15,7 +15,9 @@ process CHECKM2 {
     tuple val(meta), path(bins), path("${name}_all_stats.csv")                                , emit: stats
     tuple val(meta), path("${name}_filtered_genomes")                                         , emit: filtered_genomes
     tuple val(meta), path("${name}_filtered_genomes.tsv")                                     , emit: filtered_stats
+    // versions
     tuple val("${task.process}"), val('checkm2'), eval("checkm2 --version")                   , topic: versions
+    // logging
     tuple val("${task.process}"), val('filtered'), eval("ls ${name}_filtered_genomes | wc -l"), topic: logs
 
     // Checkm2 works with list of files OR folder as --input

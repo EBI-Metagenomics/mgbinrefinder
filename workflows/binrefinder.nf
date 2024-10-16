@@ -53,9 +53,9 @@ workflow REFINEMENT {
     renamed_binner3 = RENAME_AND_CHECK_SIZE_BINS_BINNER3.out.renamed
 
     // quality of input filtered bins
-    CHECKM2_BINNER1( "binner1", renamed_binner1, ref_checkm )
-    CHECKM2_BINNER2( "binner2", renamed_binner2, ref_checkm )
-    CHECKM2_BINNER3( "binner3", renamed_binner3, ref_checkm )
+    //CHECKM2_BINNER1( "binner1", renamed_binner1, ref_checkm )
+    //CHECKM2_BINNER2( "binner2", renamed_binner2, ref_checkm )
+    //CHECKM2_BINNER3( "binner3", renamed_binner3, ref_checkm )
 
     binners_all = renamed_binner1.join(renamed_binner2, remainder: true).join(renamed_binner3, remainder: true)
     // replace null (generated with remainder to [])
@@ -70,30 +70,36 @@ workflow REFINEMENT {
     refine13_input = binners.map{meta, b1, b2, b3 -> [meta, b1, b3, []]}
     refine23_input = binners.map{meta, b1, b2, b3 -> [meta, b2, b3, []]}
     REFINE12( "binner12", refine12_input, ref_checkm )
-    REFINE13( "binner13", refine13_input, ref_checkm )
-    REFINE23( "binner23", refine23_input, ref_checkm )
-    REFINE123( "binner123", binners, ref_checkm )
+    //REFINE13( "binner13", refine13_input, ref_checkm )
+    //REFINE23( "binner23", refine23_input, ref_checkm )
+    //REFINE123( "binner123", binners, ref_checkm )
 
-    binners = CHECKM2_BINNER1.out.filtered_genomes
-        .join(CHECKM2_BINNER2.out.filtered_genomes)
-        .join(CHECKM2_BINNER3.out.filtered_genomes)
-        .join(REFINE12.out.filtered_bins)
-        .join(REFINE13.out.filtered_bins)
-        .join(REFINE23.out.filtered_bins)
-        .join(REFINE123.out.filtered_bins)
+    //binners = CHECKM2_BINNER1.out.filtered_genomes
+    //    .join(CHECKM2_BINNER2.out.filtered_genomes)
+    //    .join(CHECKM2_BINNER3.out.filtered_genomes)
+    //    .join(REFINE12.out.filtered_bins)
+    //    .join(REFINE13.out.filtered_bins)
+    //    .join(REFINE23.out.filtered_bins)
+    //    .join(REFINE123.out.filtered_bins)
 
-    stats = CHECKM2_BINNER1.out.filtered_stats
-        .join(CHECKM2_BINNER2.out.filtered_stats)
-        .join(CHECKM2_BINNER3.out.filtered_stats)
-        .join(REFINE12.out.filtered_bins_stats)
-        .join(REFINE13.out.filtered_bins_stats)
-        .join(REFINE23.out.filtered_bins_stats)
-        .join(REFINE123.out.filtered_bins_stats)
+    //stats = CHECKM2_BINNER1.out.filtered_stats
+    //    .join(CHECKM2_BINNER2.out.filtered_stats)
+    //    .join(CHECKM2_BINNER3.out.filtered_stats)
+    //    .join(REFINE12.out.filtered_bins_stats)
+    //    .join(REFINE13.out.filtered_bins_stats)
+    //    .join(REFINE23.out.filtered_bins_stats)
+    //    .join(REFINE123.out.filtered_bins_stats)
 
-    CONSOLIDATE_BINS( binners, stats )
+    //CONSOLIDATE_BINS( binners, stats )
 
     //CHECKM_FINAL(channel.value("final"), CONSOLIDATE_BINS.out.dereplicated_bins, ref_checkm)
 
-    CUSTOM_DUMPSOFTWAREVERSIONS(Channel.topic('versions').unique().collectFile(name: 'collated_versions.yml'))
-    Channel.topic('logs').unique().collectFile(name: 'progress.log'))
+    versions = channel.topic('versions').unique().groupTuple(by:0).map { process, software, versions ->
+              def combined = (0..<software.size()).collect { idx -> "${software[idx]}: ${versions[idx]}" };
+              def formatted_output = "${process}:\n" + combined.collect { "   ${it}" }.join("\n");
+              return formatted_output
+    }.collectFile(name: 'collated_versions.yml', storeDir: params.outdir)
+    CUSTOM_DUMPSOFTWAREVERSIONS(versions)
+
+    //channel.topic('logs').unique().collectFile(name: 'progress.log', storeDir: params.outdir)
 }

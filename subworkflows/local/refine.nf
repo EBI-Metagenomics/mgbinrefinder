@@ -10,10 +10,10 @@ workflow REFINE {
     main:
 
     BINNING_REFINER( name, binners )
-    CHECKM2_REFINE( name, BINNING_REFINER.out.refined_bins, checkm2_db )
+    //CHECKM2_REFINE( name, BINNING_REFINER.out.refined_bins, checkm2_db )
 
-    emit:
+    //emit:
 
-    filtered_bins = CHECKM2_REFINE.out.filtered_genomes
-    filtered_bins_stats = CHECKM2_REFINE.out.filtered_stats
+    //filtered_bins = CHECKM2_REFINE.out.filtered_genomes
+    //filtered_bins_stats = CHECKM2_REFINE.out.filtered_stats
 }
