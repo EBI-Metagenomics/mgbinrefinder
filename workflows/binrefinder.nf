@@ -101,5 +101,10 @@ workflow REFINEMENT {
     }.collectFile(name: 'collated_versions.yml', storeDir: params.outdir)
     CUSTOM_DUMPSOFTWAREVERSIONS(versions)
 
-    //channel.topic('logs').unique().collectFile(name: 'progress.log', storeDir: params.outdir)
+    channel.topic('logs').unique().map { process, name, count ->
+      """\
+      ${process.tokenize(':').last()}:
+        ${name}: ${count}
+      """.stripIndent()
+    }.collectFile(name: 'progress.log', storeDir: params.outdir)
 }
