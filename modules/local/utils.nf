@@ -8,7 +8,9 @@ process RENAME_AND_CHECK_SIZE_BINS {
     tuple val(meta), path(bins, stageAs: "bins_dir/*")
 
     output:
-    tuple val(meta), path("out/*"), emit: renamed, optional: true
+    tuple val(meta), path("out"), emit: renamed
+    tuple val("${task.process}"), val('bins_dir'), eval("ls bins_dir | wc -l"), topic: logs
+    tuple val("${task.process}"), val('filtered_out'), eval("ls out | wc -l") , topic: logs
 
     script:
     """
